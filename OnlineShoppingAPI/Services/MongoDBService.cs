@@ -190,18 +190,16 @@ namespace OnlineShopping.Services
             {
                 FilterDefinition<Products> filter = Builders<Products>.Filter.Eq("ProductId", ProductId);
                 await _productsCollection.DeleteOneAsync(filter);
-                return "Product deleted successfully";
+                return "Product with ID " + ProductId + " deleted successfully";
             }
             else
             {
-                return "Product deletion failed";
+                return "Product with ID " +ProductId+" deletion failed";
             }
 
             
         }
-        //orders
-
-//for adding products to check if user is admin from login table
+        
 
         private async Task<bool> IsUserAdmin(string loginid,string password)
 
@@ -209,7 +207,6 @@ namespace OnlineShopping.Services
 
             var filter1 = Builders<Login>.Filter.Where(x => x.Loginid == loginid && x.Role == "Admin" && x.Password==password);
 
-            //var projection = Builders<Login>.Projection.Include(x => x.Role);
 
             var loginCheck = await _loginCollection.Find(filter1).FirstOrDefaultAsync();
 

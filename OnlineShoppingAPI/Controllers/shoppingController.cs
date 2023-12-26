@@ -38,7 +38,7 @@ namespace OnlineShoppingAPI.Controllers
             public Registration Registration { get; set; }
             public Login Login { get; set; }
         }
-        //kafka
+        //kafka test
         [HttpPost("producer")]
         public async Task<IActionResult>Post([FromBody] Login loginRequest)
         {
@@ -84,7 +84,15 @@ namespace OnlineShoppingAPI.Controllers
 
             if (register == "User Created Successfully!")
             {
-                return Ok(register); // Return HTTP 200 OK with the password
+        
+                    ProducerConfig config = new ProducerConfig
+                    {
+                        BootstrapServers = bootstrapServers,
+                        ClientId = Dns.GetHostName()
+                    };
+                    using var producer = new ProducerBuilder<Null, string>(config).Build();
+                    var deliveryReport = producer.ProduceAsync(topic, new Message<Null, string> { Value = register }).Result;
+                    return Ok(register);
             }
             else
             {
@@ -119,7 +127,7 @@ namespace OnlineShoppingAPI.Controllers
             }
         }
 
-        //check
+      
         [HttpPost]
         public async Task<ActionResult<Login>> PostLogin(Login login)
         {
@@ -154,7 +162,15 @@ namespace OnlineShoppingAPI.Controllers
             var prod = await _mongoDBService.CreateProduct(prodloginWrapper.Products, prodloginWrapper.Login);
             if (prod == "Product Created!")
             {
-                return Ok(prod); // Return HTTP 200 OK with the password
+             
+                    ProducerConfig config = new ProducerConfig
+                    {
+                        BootstrapServers = bootstrapServers,
+                        ClientId = Dns.GetHostName()
+                    };
+                    using var producer = new ProducerBuilder<Null, string>(config).Build();
+                    var deliveryReport = producer.ProduceAsync(topic, new Message<Null, string> { Value = prod }).Result;
+                    return Ok(prod); 
             }
             else
             {
@@ -162,15 +178,7 @@ namespace OnlineShoppingAPI.Controllers
             }
         }
 
-        //[HttpPost("{ProductName}/update/{ProductId}")]
-        //public async Task<IActionResult> UpdateProd(int ProductId,  string ProductStatus, int StockCount)
-        //{
-        //    await _mongoDBService.UpdateProduct(ProductId, ProductStatus, StockCount);
-        //    return NoContent();
-        //}
-
-
-        //API CALL #6
+        //API CALL #7
         [HttpPut("{ProductName}/update/{ProductId}")]
         public async Task<IActionResult> UpdateProd( ProductsLoginWrapper prodlog)
         {
@@ -178,14 +186,12 @@ namespace OnlineShoppingAPI.Controllers
           
             if (res != null)
             {
-                //kafka display to show product status changed if stock count is less than or equal to 5 or 0
                 ProducerConfig config = new ProducerConfig
                 {
                     BootstrapServers = bootstrapServers,
                     ClientId = Dns.GetHostName()
                 };
                 using var producer = new ProducerBuilder<Null, string>(config).Build();
-                //string message = String.Join(", ", res);
                 var deliveryReport = producer.ProduceAsync(topic, new Message<Null, string> { Value = res }).Result;
                 return Ok(res);
             }
@@ -194,7 +200,7 @@ namespace OnlineShoppingAPI.Controllers
                 return BadRequest("Not Allowed");
             }
         }
-        //API CALL #7
+        //API CALL #8
         [HttpDelete("{ProductName}/delete/{ProductId}")]
         public async Task<IActionResult> DeleteProd(int ProductId, Login login)
 
@@ -203,8 +209,15 @@ namespace OnlineShoppingAPI.Controllers
             var delans = await _mongoDBService.DeleteProduct(ProductId, login);
             if (delans != null)
             {
+                ProducerConfig config = new ProducerConfig
+                {
+                    BootstrapServers = bootstrapServers,
+                    ClientId = Dns.GetHostName()
+                };
+                using var producer = new ProducerBuilder<Null, string>(config).Build();
+                var deliveryReport = producer.ProduceAsync(topic, new Message<Null, string> { Value = delans }).Result;
                 return Ok(delans);
-                //kafka log to display orderlist
+                
 
             }
             else
@@ -223,12 +236,6 @@ namespace OnlineShoppingAPI.Controllers
             public Orders orders { get; set; }
             public Login login { get; set; }
         }
-        //[HttpGet("products/search/{ProductName}")]
-        //public async Task<List<Products>> Productsearch(string ProductName)
-        //{
-        //    return await _mongoDBService.SearchProduct(ProductName);
-
-        //}
 
 
         [HttpGet("ListOrders")]
@@ -238,8 +245,6 @@ namespace OnlineShoppingAPI.Controllers
             if (orderList != null)
             {
                 return Ok(orderList);
-                //kafka log to display orderlist
-
             }
             else
             {
@@ -279,7 +284,7 @@ namespace OnlineShoppingAPI.Controllers
             var res = await _mongoDBService.CreateOrder(orpl.orders, orpl.Products, orpl.login);
             if (res == "Order created")
             {
-                return Ok(res); // Return HTTP 200 OK with the password
+                return Ok(res); 
             }
             else
             {
