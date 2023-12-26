@@ -14,6 +14,8 @@ using System.Text.Json;
 using System.Diagnostics;
 using static System.Net.Mime.MediaTypeNames;
 using Microsoft.VisualBasic;
+using NLog.Fluent;
+using static Confluent.Kafka.ConfigPropertyNames;
 
 namespace OnlineShopping.Services
 {
@@ -89,21 +91,28 @@ namespace OnlineShopping.Services
             return;
         }
         
-        public async Task<string> SearchPassword(string loginid)
+        public async Task<string> SearchPassword(string fname, Login login)
         {
-            var filter = Builders<Login>.Filter.Eq("Loginid", loginid);
+            bool IsAdminTrue = await IsUserAdmin(login.Loginid, login.Password);
 
-            var result = await _loginCollection.Find(filter).FirstOrDefaultAsync();
-
-            if (result != null)
+            if (IsAdminTrue)
             {
-                string password = result.Password;
-                return password;
+                var filter = Builders<Registration>.Filter.Eq("Fname", fname);
+                var result = await _registrationCollection.Find(filter).FirstOrDefaultAsync();
+                if (result != null)
+                {
+                    string password = result.Password;
+                    return password;
+                }
+                else
+                {
+                    return null;
+                }
             }
             else
             {
-                return null; // Handle case where loginid is not found
-            }
+                return "User not allowed!";
+            }          
         }
 
 
@@ -174,11 +183,21 @@ namespace OnlineShopping.Services
             }
            
         }
-        public async Task DeleteProduct(int ProductId) 
+        public async Task<string> DeleteProduct(int ProductId, Login login) 
         {
-            FilterDefinition<Products> filter = Builders<Products>.Filter.Eq("ProductId", ProductId);
-            await _productsCollection.DeleteOneAsync(filter);
-            return;
+            bool IsAdminTrue = await IsUserAdmin(login.Loginid, login.Password);
+            if (IsAdminTrue)
+            {
+                FilterDefinition<Products> filter = Builders<Products>.Filter.Eq("ProductId", ProductId);
+                await _productsCollection.DeleteOneAsync(filter);
+                return "Product deleted successfully";
+            }
+            else
+            {
+                return "Product deletion failed";
+            }
+
+            
         }
         //orders
 

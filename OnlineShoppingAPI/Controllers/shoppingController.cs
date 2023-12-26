@@ -12,8 +12,9 @@ using System.Net;
 
 namespace OnlineShoppingAPI.Controllers
 {
-    [Route("api/v1.0/[controller]")]
     [ApiController]
+    [Route("api/v1.0/[controller]")]
+   
     public class shoppingController : ControllerBase
     {
         private readonly MongoDBService _mongoDBService;
@@ -23,6 +24,8 @@ namespace OnlineShoppingAPI.Controllers
         {
             _mongoDBService = mongoDBService;
         }
+
+        [HttpGet]
         public async Task<List<Registration>> Get()
         {
             return await _mongoDBService.GetAllUsers();
@@ -100,18 +103,19 @@ namespace OnlineShoppingAPI.Controllers
         }
 
         //API CALL #3
-        [HttpGet("{Loginid}/forgot")]
-        public async Task<ActionResult<string>> GetPassword(string loginid)
+        [HttpGet("{Fname}/forgot")]
+        public async Task<ActionResult<string>> GetPassword(string fname, Login login)
         {
-            var password = await _mongoDBService.SearchPassword(loginid);
+            var password = await _mongoDBService.SearchPassword(fname, login);
 
-            if (password != null)
+            if (password == "User not allowed!")
             {
-                return Ok(password); // Return HTTP 200 OK with the password
+                return BadRequest(password);
             }
             else
             {
-                return NotFound(); // Return HTTP 404 Not Found if loginid is not found
+                
+                return Ok(password);
             }
         }
 
@@ -192,10 +196,22 @@ namespace OnlineShoppingAPI.Controllers
         }
         //API CALL #7
         [HttpDelete("{ProductName}/delete/{ProductId}")]
-        public async Task<IActionResult> DeleteProd(int ProductId)
+        public async Task<IActionResult> DeleteProd(int ProductId, Login login)
+
         {
-            await _mongoDBService.DeleteProduct(ProductId);
-            return NoContent();
+
+            var delans = await _mongoDBService.DeleteProduct(ProductId, login);
+            if (delans != null)
+            {
+                return Ok(delans);
+                //kafka log to display orderlist
+
+            }
+            else
+            {
+                return BadRequest("Not Allowed");
+            }
+         
         }
 
 
